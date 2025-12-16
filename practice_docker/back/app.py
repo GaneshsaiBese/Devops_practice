@@ -1,47 +1,90 @@
 from flask import Flask, jsonify, request
-import os # Import the os module
+import os
+import psycopg2 
+import time
 
 app = Flask(__name__)
 
-# Define the file path within the container
-DATA_DIR = "/data"
-DATA_FILE = os.path.join(DATA_DIR, "words.txt")
+# --- Improved Connection Logic ---
+def get_db_connection():
+    """Attempts to connect to the database with retries."""
+    while True:
+        try:
+            conn = psycopg2.connect(
+                host=os.getenv("DB_HOST"),
+                dbname=os.getenv("DB_NAME"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+                connect_timeout=5
+            )
+            conn.autocommit = True
+            return conn
+        except psycopg2.OperationalError as e:
+            print(f"Database not ready ({e}). Retrying in 2 seconds...")
+            time.sleep(2)
+
+# Initial connection check
+conn = get_db_connection()
+
+def increment_count():
+    global conn
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE word_stats SET total_words = total_words + 1 WHERE id = 1")
+    except psycopg2.OperationalError:
+        # If connection died, reconnect and try once more
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute("UPDATE word_stats SET total_words = total_words + 1 WHERE id = 1")
+def get_count_val():
+    global conn
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT total_words FROM word_stats WHERE id = 1")
+            result = cur.fetchone()
+            # result is a tuple like (0,), so we need result[0]
+            return result[0] if result else 0 
+    except (psycopg2.OperationalError, TypeError):
+        conn = get_db_connection()
+        return get_count_val()
+
+# --- Routes ---
 
 @app.route("/")
 def home():
    return jsonify({"msg": "Hello from backend!"})
 
+@app.route("/count", methods=["GET"])
+def count():
+   return jsonify({"total_words": get_count_val()})
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
    payload = request.json or {}
    text = payload.get("text", "")
-   # simple demo analysis: length and word count
+   
+   # 1. Analyze text
    length = len(text)
    words = len(text.split())
+   
+   # 2. Save to File (Volume check)
    save_word(text)
-   return jsonify({"length": length, "words": words}) # Added return statement
+   
+   # 3. Save to Database (Postgres check)
+   increment_count()
+   
+   return jsonify({"length": length, "words": words})
+
+# --- File Operations ---
+DATA_DIR = "/data"
+DATA_FILE = os.path.join(DATA_DIR, "words.txt")
 
 def save_word(word):
-    # Ensure the directory exists before attempting to open the file
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
-        print(f"Created directory: {DATA_DIR}")
-        
     with open(DATA_FILE, "a") as f:
         f.write(word + "\n")
-    # You were calling read_words() here, removed for simplicity
-    print(f"Saved word: {word} to {DATA_FILE}")
-
-
-def read_words():
-    try:
-        with open(DATA_FILE, "r") as f:
-            return f.read().splitlines()
-    except FileNotFoundError:
-        return []
- 
 
 if __name__ == "__main__":
-   # bind to 0.0.0.0 so container exposes the port to the network
    app.run(host="0.0.0.0", port=5000)
 

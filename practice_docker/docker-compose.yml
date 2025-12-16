@@ -6,7 +6,14 @@ services:
       - front-net
       - back-net
     volumes:
-      - ./back:/data
+      - ./back:/app      # <--- Change this from /data to /app
+      - ./back_data:/data # <--- Keep this for your words.txt file
+    environment:
+      - DB_HOST=db
+      - DB_NAME=worddb
+      - DB_USER=worduser
+      - DB_PASSWORD=${DB_PASSWORD}
+
   frontend:
     build: ./front
     container_name: docker-net-frontend
@@ -21,14 +28,26 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_PASSWORD: pass123
-      POSTGRES_USER: appuser
-      POSTEGRES_DB: appdb
+      POSTGRES_DB: worddb
+      POSTGRES_USER: worduser
+      POSTGRES_PASSWORD: ${DB_PASSWORD} # Reads password from host environment variable
+    volumes:
+      # Named volume for persistent database files
+      - pgdata:/var/lib/postgresql/data 
+      # Bind mount for SQL initialization script
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - back-net
+ 
 
 networks:
   front-net:
     driver: bridge
   back-net:
     driver: bridge
+
+volumes:
+  # Define the named volume used by the 'db' service
+  pgdata:
+    driver: local
+
