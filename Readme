@@ -1,0 +1,206 @@
+This repo is my Docker learning playground.
+I used simple Streamlit + Flask apps just for learning Docker concepts — not real production apps.
+The goal is:
+• understand Docker basics
+• networking
+• volumes
+• docker-compose
+• common errors (and why they happen)
+⸻
+🧠 What is Docker (simple)
+Docker is use and throw tech 😄
+You define everything once (image, network, volume), Docker handles:
+• namespaces
+• cgroups
+• isolation
+• networking
+Same Linux kernel, different containers → lightweight, no VM drama.
+⸻
+🧱 Core Docker Components (important)
+1️⃣ Image
+• Blueprint
+• Created using Dockerfile
+• Immutable
+docker build -t my-image .
+
+⸻
+2️⃣ Container
+• Running instance of image
+• Temporary by default (dies → data gone)
+docker run -d -p 8501:8501 my-image
+
+⸻
+3️⃣ Dockerfile (what I learned)
+Dockerfile is layer based.
+Each instruction = new layer.
+Important rules:
+• FROM must come first
+• Order matters for caching
+• Small base image = smaller final image
+Example:
+FROM python:3.11-slim
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["python","-m","streamlit","run","app.py"]
+
+⸻
+🏗️ Multi-stage Build (where I struggled 😭)
+Why multi-stage?
+• builder image → install heavy stuff
+• runtime image → only what is needed
+Key concept:
+Runtime dependencies must exist in final image
+Mistake I made:
+• Installed Streamlit in builder
+• Copied only app files
+• Final image didn’t have streamlit binary → crash
+Correct pattern (Streamlit case):
+FROM python:3.11-slim AS builder
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+FROM python:3.11-slim
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /app /app
+CMD ["python","-m","streamlit","run","streamlit_app.py"]
+
+⸻
+🌐 Docker Networking (no NAT headache 😌)
+Bridge network (default & most used)
+• Containers get private IP
+• Docker provides built-in DNS
+• Service name = hostname
+Example:
+services:
+ backend:
+   networks:
+     - back-net
+ frontend:
+   networks:
+     - front-net
+Inside frontend:
+curl http://backend:5000
+No IP needed, Docker resolves it.
+⸻
+Important rule
+❌ localhost inside container ≠ host
+✔ service-name:port works
+⸻
+📦 Docker Volumes (this was confusing initially)
+Truth bomb 💣
+Container filesystem is temporary
+If container dies → data gone.
+⸻
+Volume = persistent storage
+Example:
+volumes:
+ word-data:
+services:
+ backend:
+   volumes:
+     - word-data:/data
+This does:
+• Creates volume
+• Mounts it to /data
+• Data survives container restart
+⸻
+Where data actually lives
+On host:
+/var/lib/docker/volumes/word-data/_data/
+
+⸻
+My mistake
+• App wrote to /data/words.txt
+• Volume was NOT mounted
+• /data didn’t exist → confusion
+Fix:
+• Mount volume
+• Or create directory explicitly
+os.makedirs("/data", exist_ok=True)
+
+⸻
+🧩 docker-compose (life saver)
+docker-compose is:
+“Run multiple containers without losing sanity”
+docker compose up
+docker compose down
+• up → creates containers
+• down → deletes containers (volumes stay unless -v)
+Scaling issue:
+• container_name blocks scaling
+• Remove it if you want multiple replicas
+⸻
+🔥 Common Errors I Faced (and WHY)
+❌ Port already allocated
+Bind for 0.0.0.0:8501 failed
+Reason:
+• Another container already using same port
+Fix:
+docker ps
+docker stop <container>
+
+⸻
+❌ streamlit: executable not found in $PATH
+Reason:
+• Streamlit not installed in final image
+Fix:
+• Install in runtime stage
+• Or use python -m streamlit
+⸻
+❌ No space left in container
+Reason:
+• Small base image
+• Docker disk full
+Fix:
+docker system prune -a
+
+⸻
+❌ Authentication failed (GitHub)
+Reason:
+• GitHub doesn’t accept passwords anymore
+Fix:
+• Use Personal Access Token
+• Or SSH keys
+⸻
+🧠 Git + Docker (important concept)
+Thing Goes where
+Source code Git
+Docker images Docker registry
+Data Volumes
+Secrets env / secret manager
+Artifacts S3 / Nexus
+
+⸻
+❌ What NOT to commit to Git
+Never commit:
+• .tar.gz
+• node_modules
+• venv
+• Docker images
+• .env
+Use .gitignore.
+⸻
+🧪 Why Streamlit / Flask apps exist here
+They are just demo apps:
+• frontend → UI
+• backend → API
+• DB → postgres
+Purpose:
+• test networking
+• test volumes
+• test compose
+⸻
+🧠 Final Mental Model
+Docker is:
+• declarative
+• disposable
+• predictable
+If something breaks:
+• delete container
+• rebuild image
+• re-run
+No emotional attachment 😄
+#trigger action

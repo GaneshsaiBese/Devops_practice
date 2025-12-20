@@ -1,0 +1,55 @@
+[
+    {
+        "Name": "practice_dock_back-net",
+        "Id": "f92ff77e0e648cbda25a09e5dcf8f897b55f85add2f1451f2800f65ed8c1045f",
+        "Created": "2025-12-07T15:02:32.153127155Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.20.0.0/16",
+                    "IPRange": "",
+                    "Gateway": "172.20.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "c95e5ac771339cc57a52c6b06e5e8488d9bc52dc458c0f97d6bc91956e3e380c",
+            "com.docker.compose.network": "back-net",
+            "com.docker.compose.project": "practice_dock",
+            "com.docker.compose.version": "2.40.3"
+        },
+        "Containers": {
+            "72e86096621bd81019418b4a4c968dbe79b96316a098f13a65704f0e9b1e251e": {
+                "Name": "docker-net-backend",
+                "EndpointID": "68206fe2043132471e7d7e4aef3aca9258c428281745f8bb8211902ce7692bd1",
+                "MacAddress": "92:85:c8:8a:06:38",
+                "IPv4Address": "172.20.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.20.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]
