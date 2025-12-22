@@ -9,6 +9,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    - name: set image tag
+      run: echo "img_tag=${GITHUB_SHA}" >> $GUTHUB_ENV
     - name: docker login
       run: docker login -u "${{secrets.DKRHUB_UNAME}}" -p "${{secrets.DKRHUB_PSWD}}"
     - name: Build image
