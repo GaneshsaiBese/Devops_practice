@@ -24,12 +24,12 @@ jobs:
     steps:
       - name: deploy to vm
         uses: appleboy/ssh-action@v1
+        env:
+          tag: ${{ github.sha }}
         with:
           host: ${{secrets.VM_HOST}}
           username: ${{secrets.VM_USER}}
           key: ${{secrets.VM_SSH_KEY}}
-          env:
-            tag: ${{ github.sha }}
           envs: tag
           script: |
             export img_tag=$tag
