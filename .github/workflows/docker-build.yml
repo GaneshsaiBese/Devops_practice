@@ -34,6 +34,7 @@ jobs:
           script: |
             export img_tag=$tag
             cd /practice_docker
+             echo "Pulling images with tag: $tag"
             docker compose pull
             docker compose up -d
   
