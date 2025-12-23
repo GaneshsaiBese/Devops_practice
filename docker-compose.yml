@@ -41,7 +41,6 @@ services:
     networks:
       - back-net
  
-
 networks:
   front-net:
     driver: bridge
