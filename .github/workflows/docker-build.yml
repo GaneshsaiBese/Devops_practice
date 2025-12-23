@@ -28,8 +28,11 @@ jobs:
           host: ${{secrets.VM_HOST}}
           username: ${{secrets.VM_USER}}
           key: ${{secrets.VM_SSH_KEY}}
+          env:
+            tag: ${{ github.sha }}
+          envs: tag
           script: |
-            export img_tag = ${{ github.sha }}
+            export img_tag=$tag
             cd /practice_docker
             docker compose pull
             docker compose up -d
