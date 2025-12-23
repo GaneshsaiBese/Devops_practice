@@ -10,7 +10,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: set image tag
-      run: echo "img_tag=${GITHUB_SHA}" >> $GITHUB_ENV
+      run: echo "img_tag=${{ github.sha }}" >> $GITHUB_ENV
     - name: docker login
       run: docker login -u "${{secrets.DKRHUB_UNAME}}" -p "${{secrets.DKRHUB_PSWD}}"
     - name: Build image
@@ -29,7 +29,7 @@ jobs:
           username: ${{secrets.VM_USER}}
           key: ${{secrets.VM_SSH_KEY}}
           script: |
-            export img_tag = ${{GITHUB_SHA}}
+            export img_tag = ${{ github.sha }}
             cd /practice_docker
             docker compose pull
             docker compose up -d
