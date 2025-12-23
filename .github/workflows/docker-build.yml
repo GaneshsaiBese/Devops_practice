@@ -30,6 +30,6 @@ jobs:
           key: ${{secrets.VM_SSH_KEY}}
           script: |
             cd /practice_docker
-            img_tag=latest docker compose pull
+            img_tag=${GITHUB_SHA} docker compose pull
             docker compose up -d
   
