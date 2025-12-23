@@ -22,19 +22,25 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: deploy to vm
-        uses: appleboy/ssh-action@v1
-        env:
-          tag: ${{ github.sha }}
-        with:
-          host: ${{secrets.VM_HOST}}
-          username: ${{secrets.VM_USER}}
-          key: ${{secrets.VM_SSH_KEY}}
-          envs: tag
-          script: |
-            export img_tag=$tag
+    - name: deploy to vm
+      uses: appleboy/ssh-action@v1
+        # 1. Define the variable for the Runner
+      env:
+        IMG_TAG: ${{ github.sha }}
+      with:
+        host: ${{secrets.VM_HOST}}
+        username: ${{secrets.VM_USER}}
+        key: ${{secrets.VM_SSH_KEY}}
+          # 2. Tell the action to pass this specific variable to the VM
+        envs: IMG_TAG
+        script: |
+            # 3. Use the variable (it is now available as $IMG_TAG)
             cd /practice_docker
-             echo "Pulling images with tag: $tag"
+            
+            # Export it so docker-compose can see it
+            export img_tag=$IMG_TAG
+            
+            echo "Successfully received tag: $img_tag"
+            
             docker compose pull
             docker compose up -d
-  
