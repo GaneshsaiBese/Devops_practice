@@ -17,3 +17,19 @@ jobs:
       run: docker compose build
     - name: Docker push
       run: docker compose push
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: deploy to vm
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{secrets.VM_HOST}}
+          username: ${{secrets.VM_USER}}
+          key: ${{secrets.VM_SSH_KEY}}
+          script: |
+            cd practice_docker
+            docker compose pull
+            docker compose up -d
+  
