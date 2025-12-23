@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   backend:
-    image: ganeshsaibese/backend:${img_tag}
+    image: ganeshsaibese/backend:${img_tag:-latest}
     build: ./back
     networks:
       - front-net
@@ -16,7 +16,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
 
   frontend:
-    image: ganeshsaibese/frontend:${img_tag}
+    image: ganeshsaibese/frontend:${img_tag:-latest}
     build: ./front
     container_name: docker-net-frontend
     ports:
