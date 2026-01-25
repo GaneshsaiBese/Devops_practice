@@ -205,3 +205,416 @@ If something breaks:
 No emotional attachment 😄
 #trigger action
 second trial
+
+ci/cd-k8s PART--------------------------------------
+😂😂 OK OK I GOT YOU.
+You don’t want “polished portfolio README”.
+You want **YOUR NOTES**, in **YOUR STYLE**, for **INTERVIEW REVISION**.
+
+Like:
+
+> “Open README → revise → brain refresh → go interview.”
+
+Let’s continue from where you stopped, same tone, same vibe.
+
+You can paste this **after your last line**.
+
+---
+
+## ⸻
+
+## ⚙️ CI/CD (GitHub Actions – My Learning)
+
+CI/CD =
+“Automatically build, test, and deploy when I push code”
+
+Flow I used:
+
+Git push
+→ GitHub Actions runs
+→ Build Docker images
+→ Push to DockerHub
+→ (Later) Deploy to VM / K8s
+
+So I don’t manually do:
+
+docker build
+docker push
+docker pull
+docker run
+
+Every time 😌
+
+### 📁 Where CI Lives
+
+Inside repo:
+.github/workflows/main.yml
+If file is not here → Action won’t run ❌
+
+My mistake:
+
+• Put workflow in wrong folder
+• Nothing triggered
+• Confused 😭
+
+Fix:
+Put inside `.github/workflows/`
+
+---
+
+### 🏗️ Basic CI Steps
+
+My pipeline:
+
+1️⃣ Checkout code
+2️⃣ Login to DockerHub
+3️⃣ Build images
+4️⃣ Push images
+
+Example logic:
+
+uses: actions/checkout
+docker login
+docker compose build
+docker compose push
+
+---
+
+### 🔐 Secrets (Important)
+
+Never hardcode password in YAML ❌
+
+Use:
+GitHub Repo → Settings → Secrets
+
+Example:
+DKRHUB_UNAME
+DKRHUB_PSWD
+VM_SSH_KEY
+
+Then in YAML:
+${{ secrets.NAME }}
+---
+
+### ❌ CI Error: Docker Login Failed
+
+Reason:
+• Used normal password
+• DockerHub now needs token
+
+Fix:
+• Create access token
+• Use token as password
+
+---
+
+### ❌ CI Didn’t Trigger
+
+Reason:
+• Wrong branch name
+• Wrong folder
+• Wrong YAML syntax
+
+Fix:
+Check:
+on:
+  push:
+    branches:
+      - main
+---
+
+### 🏷️ Image Tagging (Important Concept)
+
+Instead of:
+latest
+
+I used:
+github.sha
+
+So every build = unique tag.
+
+Example:
+frontend:fbb04518...
+Benefit:
+
+✔ Rollback
+✔ Traceable
+✔ No overwrite
+
+---
+
+## ⸻
+
+## 🚀 CD (Deployment Part – What I Learned)
+
+CD =
+“After build, automatically deploy”
+
+I used:
+
+• SSH into VM
+• Pull new image
+• Run compose
+
+Flow:
+
+GitHub → SSH → VM → docker compose up
+
+Using:
+appleboy/ssh-action
+---
+
+### ❌ SSH Failed
+
+Error:
+
+handshake failed
+Reason:
+• No authorized_keys
+• Wrong key
+• Permission issue
+
+Fix:
+~/.ssh/authorized_keys
+chmod 600
+---
+
+### ❌ IP Changed
+
+Cloud VM IP changes sometimes.
+
+Fix:
+• Use static IP
+• Or update secrets
+
+---
+
+## ⸻
+
+## ☸️ Kubernetes (Real Learning Started Here 😭🔥)
+
+Kubernetes =
+“Docker + automation + scaling + healing”
+
+Docker = single machine
+K8s = multi machine
+
+---
+
+### 🧱 Core K8s Components
+
+#### 1️⃣ Pod
+
+Smallest unit.
+
+Contains container(s).
+
+Temporary.
+
+Dies → recreated.
+
+---
+
+#### 2️⃣ Deployment
+
+Manages pods.
+
+Handles:
+
+• Scaling
+• Restart
+• Rollout
+
+Example:
+bash
+kubectl apply -f deploy.yaml
+---
+
+#### 3️⃣ Service
+
+Exposes pods.
+
+Gives stable DNS.
+
+Important:
+
+Pod IP changes ❌
+Service IP stable ✅
+
+---
+
+Types:
+
+ClusterIP → internal
+NodePort → external
+LoadBalancer → cloud
+
+---
+
+#### 4️⃣ Namespace
+
+Logical separation.
+
+Default = default.
+
+---
+
+## ⸻
+
+## 🌐 K8s Networking (Important)
+
+Rule:
+
+Pod → Pod = direct
+Service → Pod = via DNS
+
+DNS format:
+service-name
+Example:
+http://backend:5000
+---
+
+### ❌ My Mistake
+
+Used:
+
+```
+localhost
+```
+
+Inside container ❌
+
+Fix:
+
+Use service name.
+
+---
+
+## ⸻
+## 🔐 K8s Secrets (Painful Part 😭)
+Used for:
+• DB password
+• Docker registry auth
+
+Example:
+imagePullSecrets
+---
+
+### ❌ ImagePullBackOff
+
+Reason:
+
+• Private image
+• No auth
+
+Fix:
+Create secret:
+kubectl create secret docker-registry
+---
+### ❌ Wrong Secret
+Used wrong password.
+Fix:
+Use DockerHub token.
+---
+## ⸻
+
+## 💾 K8s + Database (Postgres)
+
+DB is another pod.
+
+Need:
+
+• Deployment
+• Service
+• Env vars
+
+---
+
+### ❌ DB Not Ready
+
+Error:
+connection failed
+Reason:
+• DB not started
+• Wrong host
+• Wrong password
+
+Fix:
+
+Check:
+kubectl logs
+kubectl exec -- env
+
+---
+
+### ❌ No Password Supplied
+
+Reason:
+Env var missing.
+
+Fix:
+Fix deployment YAML.
+
+---
+
+## ⸻
+
+## 🐞 K8s Debugging Cheat Sheet
+
+When stuck:
+
+### Pods
+kubectl get pods
+### Details
+kubectl describe pod
+### Logs
+kubectl logs
+### Inside pod
+kubectl exec -it -- sh
+### Services
+kubectl get svc
+---
+
+## ⸻
+
+## ⚡ Resource Management
+
+Limit CPU/RAM:
+
+yaml
+resources:
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+Prevents one pod from killing others.
+---
+## ⸻
+
+## 📈 Scaling
+
+Manual:
+kubectl scale deployment backend --replicas=3
+Auto (HPA):
+
+CPU based scaling.
+
+---
+
+## ⸻
+
+## 🧠 Interview Mental Map
+
+When asked “How do you deploy?”
+
+Answer:
+Code → GitHub
+CI → Build image
+Registry → Store image
+CD → Deploy
+K8s → Run + Scale
+
+---
+When asked “How debug?”
+Answer:
+get → describe → logs → exec
